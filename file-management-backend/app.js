@@ -36,19 +36,19 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 //Route for handling file upload
-app.post('/upload/:userId', upload.single('file'), (req, res) => {
-	const userId = req.params.userId;
-	const filePath = req.file.path;
+// app.post('/upload/:userId', upload.single('file'), (req, res) => {
+// 	const userId = req.params.userId;
+// 	const filePath = req.file.path;
 
-	//Insert file path inot the database
-	db.run('INSERT INTO files (user_id, filename, file_path) VALUES (?, ?, ?)', [userId, req.file.originalname, filePath], (err) => {
-		if (err){
-			res.status(500).json({ error: err.message });
-			return;
-		}
-		res.status(200).send('File uploaded and path was stored in Database');
-	});
-});
+// 	//Insert file path inot the database
+// 	db.run('INSERT INTO files (user_id, filename, file_path) VALUES (?, ?, ?)', [userId, req.file.originalname, filePath], (err) => {
+// 		if (err){
+// 			res.status(500).json({ error: err.message });
+// 			return;
+// 		}
+// 		res.status(200).send('File uploaded and path was stored in Database');
+// 	});
+// });
 
 //Route for retreiving files list of user
 app.get('../userfiles/:userId', (req, res) => {
@@ -56,7 +56,7 @@ app.get('../userfiles/:userId', (req, res) => {
 
 	//query files associated with user from database
 	db.all('SELECT * FROM files WHERE user_id = ?', [userId], (err, rows) => {
-		if(err){
+		if(err) {
 			res.status(500).json({ error: err.message });
 			return;
 		}
@@ -67,11 +67,13 @@ app.get('../userfiles/:userId', (req, res) => {
 
 
 //Post request for uploading files to server
-app.post('/upload', 
+app.post('/upload/:userId', 
     fileUpload({ createParentPath: true }),
     fileInfo,
     allowedExt(['.png', '.jpg', '.jpeg', '.txt', '.pdf', '.docx', '.mp3', '.mp4']),
     (req,res) => {
+		const userId = req.params.userId;
+		// const filePath = req.file.path;	
         const files = req.files
         console.log(files);
         Object.keys(files).forEach(key => {
@@ -79,6 +81,13 @@ app.post('/upload',
             files[key].mv(filepath, (err) => {
                 if (err) return res.status(500).json({ status: "error", message: err})
             })
+			db.run('INSERT INTO files (user_id, filename, file_path) VALUES (?, ?, ?)', [userId, files[key].name, filepath], (err) => {
+				if (err){
+					res.status(500).json({ error: err.message });
+					return;
+				}
+				res.status(200).send('File uploaded and path was stored in Database');
+			});
         })
         return res.json({ status: 'success', message: Object.keys(files).toString()})
     }
