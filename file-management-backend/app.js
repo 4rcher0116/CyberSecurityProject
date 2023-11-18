@@ -84,8 +84,6 @@ app.post('/upload',
     }
 );
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-
 //Route for deleting a file 
 
 
