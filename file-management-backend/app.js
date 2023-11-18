@@ -6,6 +6,8 @@ const sqlite3 = require('sqlite3').verbose(); //import SQLite3 Module
 //Dependencies for File upload
 const multer = require('multer');
 const fs = require('fs');
+const fileInfo = require('./controllers/fileInfo');
+const allowedExt = require('./controllers/checkAllowedExts');
 
 //Configure Server
 const app = express();
@@ -63,10 +65,28 @@ app.get('../userfiles/:userId', (req, res) => {
 
 });
 
+
+//Post request for uploading files to server
+app.post('/upload', 
+    fileUpload({ createParentPath: true }),
+    fileInfo,
+    allowedExt(['.png', '.jpg', '.jpeg', '.txt', '.pdf', '.docx', '.mp3', '.mp4']),
+    (req,res) => {
+        const files = req.files
+        console.log(files);
+        Object.keys(files).forEach(key => {
+            const filepath = path.join(__dirname, 'files', files[key].name)
+            files[key].mv(filepath, (err) => {
+                if (err) return res.status(500).json({ status: "error", message: err})
+            })
+        })
+        return res.json({ status: 'success', message: Object.keys(files).toString()})
+    }
+);
+
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+
 //Route for deleting a file 
-
-
-
 
 
 
